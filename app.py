@@ -74,10 +74,15 @@ def show_edited_user(user_id):
     edituser.first_name = request.form["first-name"]
     edituser.last_name = request.form["last-name"]
     edituser.image_url = request.form["image-url"]
-    # edit_user = User(first_name=first_name, last_name=last_name, image_url=image_url)
     db.session.add(edituser)
     db.session.commit()
     return redirect(f"/users/{user_id}")
+
+@app.route("/users/<int:user_id>/delete", methods=["POST"])
+def delete_user(user_id):
+    User.query.filter_by(id=user_id).delete()
+    db.session.commit()
+    return redirect(f"/users")
 
 # @app.route("/", methods=["POST"])
 # def create_user():
