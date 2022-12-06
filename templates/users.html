@@ -7,20 +7,21 @@
 <ul>
     {% for user in users %}
     <li>
-        <a href="/{{user.id}}">{{user.first_name}} {{user.last_name}}</a>
+        <a href="/users/{{user.id}}">{{user.first_name}} {{user.last_name}}</a>
     </li>
     {% endfor %}
 </ul>
 <!-- already on the "/" route, no need to declare "/" in action -->
 <h2>Add New User</h2>
-<form action="/" method="POST">
+<a href="/users/new">Add New User</a>
+<!-- <form action="/" method="POST">
     <input type="text" name="first-name" placeholder="first name">
     <input type="text" name="last-name" placeholder="last name">
     <input type="text" name="image-url" placeholder="img url here">
     <button>Submit User</button>
 
 </form>
-    
+     -->
     
 
 

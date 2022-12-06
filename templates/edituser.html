@@ -1,0 +1,36 @@
+{% extends 'base.html'  %}
+{% block title %}User Details{% endblock %}
+
+{% block content %}
+
+    <h1>Edit {{user.first_name}} Details</h1>
+
+    <!-- <ul>
+        <li>Current ID: {{user.id}}</li>
+        <li>First Name: {{user.first_name}}</li>
+        <li>Last Name: {{user.last_name}}</li>
+       
+        <li>Avatar: {{user.image_url}}</li>
+        
+    </ul> -->
+
+    <form action="/users/{{user.id}}/edit" method="POST">
+        Current First Name: <br>
+        <input type="text" name="first-name" value="{{user.first_name}}"> <br>
+        Current Last Name: <br>
+        <input type="text" name="last-name" value="{{user.last_name}}"> <br>
+        Current Image URL: <br>
+        <input type="text" name="image-url" value="{{user.image_url}}"> <br>
+        <br>
+        <button>Edit User</button>
+    
+    </form>
+
+    <br>
+    <a href="/users/{{user.id}}">Go Back</a>
+
+    
+    
+
+
+{% endblock %}

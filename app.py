@@ -59,24 +59,44 @@ def show_new_user(user_id):
     # pet = Pet.query.get(pet_id)
     return render_template("details.html", user=user)
 
-@app.route("/", methods=["POST"])
-def create_user():
-    first_name = request.form["first-name"]
-    last_name = request.form["last-name"]
-    image_url = request.form["image-url"]
-    new_user = User(first_name=first_name, last_name=last_name, image_url=image_url)
-    db.session.add(new_user)
-    db.session.commit()
-    # currently this has no error handling life if server is off 
-    # or if user enters duplicate name (has to be unique)
-    # ideally you except the error and handle it 
-    # perhaps redirect back to form and flash error message (dup name etc)
-    return redirect(f"/{new_user.id}")
 
-@app.route('/<int:user_id>')
-def show_user(user_id):
+@app.route('/users/<int:user_id>/edit')
+def edit_user(user_id):
     """show details about a single pet"""
     # instead of writing method to check if pet is None, use get or 404
     user = User.query.get_or_404(user_id)
     # pet = Pet.query.get(pet_id)
-    return render_template("details.html", user=user)
+    return render_template("edituser.html", user=user)
+
+@app.route("/users/<int:user_id>/edit", methods=["POST"])
+def show_edited_user(user_id):
+    edituser= User.query.get(user_id)
+    edituser.first_name = request.form["first-name"]
+    edituser.last_name = request.form["last-name"]
+    edituser.image_url = request.form["image-url"]
+    # edit_user = User(first_name=first_name, last_name=last_name, image_url=image_url)
+    db.session.add(edituser)
+    db.session.commit()
+    return redirect(f"/users/{user_id}")
+
+# @app.route("/", methods=["POST"])
+# def create_user():
+#     first_name = request.form["first-name"]
+#     last_name = request.form["last-name"]
+#     image_url = request.form["image-url"]
+#     new_user = User(first_name=first_name, last_name=last_name, image_url=image_url)
+#     db.session.add(new_user)
+#     db.session.commit()
+#     # currently this has no error handling life if server is off 
+#     # or if user enters duplicate name (has to be unique)
+#     # ideally you except the error and handle it 
+#     # perhaps redirect back to form and flash error message (dup name etc)
+#     return redirect(f"/{new_user.id}")
+
+# @app.route('/<int:user_id>')
+# def show_user(user_id):
+#     """show details about a single pet"""
+#     # instead of writing method to check if pet is None, use get or 404
+#     user = User.query.get_or_404(user_id)
+#     # pet = Pet.query.get(pet_id)
+#     return render_template("details.html", user=user)

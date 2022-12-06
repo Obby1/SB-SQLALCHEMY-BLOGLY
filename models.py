@@ -18,6 +18,11 @@ class User(db.Model):
     # image_url = db.Column(db.String(300), nullable = False, unique= False default = "https://i.stack.imgur.com/34AD2.jpg")
     image_url = db.Column(db.String(300), nullable = True, unique= False)
 
+    def __repr__(self):
+        u = self
+        return f"<User id = {u.id} first name = {u.first_name} last name = {u.last_name} link = {u.image_url}>"
+        # return f"<Pet id = {self.id}>"
+
 
 
 
