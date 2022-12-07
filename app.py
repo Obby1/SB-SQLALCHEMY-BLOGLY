@@ -59,9 +59,10 @@ def show_new_user(user_id):
     """show details about a single pet"""
     # instead of writing method to check if pet is None, use get or 404
     user = User.query.get_or_404(user_id)
+    img = user.image_url
     # user = User.query.get(user_id)
     # pet = Pet.query.get(pet_id)
-    return render_template("details.html", user=user)
+    return render_template("details.html", user=user, img=img)
 
 
 @app.route('/users/<int:user_id>/edit')
