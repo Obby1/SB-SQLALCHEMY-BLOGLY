@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
-
 def connect_db(app):
     db.app = app
     db.init_app(app)
@@ -22,6 +21,7 @@ class User(db.Model):
         u = self
         return f"<User id = {u.id} first name = {u.first_name} last name = {u.last_name} link = {u.image_url}>"
         # return f"<Pet id = {self.id}>"
+
 
 
 
