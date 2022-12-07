@@ -8,34 +8,37 @@ app.config['SQLALCHEMY_ECHO'] = False
 app.config['TESTING'] = True
 app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly_test_db'
-# tests won't run without below code
-app.app_context().push()
 
-db.drop_all()
-db.create_all()
+# tests won't run without below code
+with app.app_context():
+    db.drop_all()
+    db.create_all()
+    # app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly_test_db'
+
+# with app.app_context():
+#     db.create_all()
+
 
 class UserViewsTestCase(TestCase):
     """Tests views for Users."""
     def setUp(self):
         """Add sample User."""
-
-
-        User.query.delete()
-
-        user = User(first_name="TestUser_firstname", last_name="TestUser_lastname")
-        # ideal to add 2 pets to check list pets shows up, like testpet2 
-        db.session.add(user)
-        db.session.commit()
-        # in this instance of TestCase setting self.pet_id to pet_id so inside
-        # of every test. Instead of making a new pet and using that in every
-        # single test below, we can just reference pet.id
-        self.user_id = user.id
-        self.user = user
+        with app.app_context():
+            User.query.delete()
+            user = User(first_name="TestUser_firstname", last_name="TestUser_lastname")
+            # ideal to add 2 pets to check list pets shows up, like testpet2 
+            db.session.add(user)
+            db.session.commit()
+            # in this instance of TestCase setting self.pet_id to pet_id so inside
+            # of every test. Instead of making a new pet and using that in every
+            # single test below, we can just reference pet.id
+            self.user_id = user.id
+            self.user = user
 
     def tearDown(self):
         """Clean up any fouled transaction."""
-
-        db.session.rollback()
+        with app.app_context():
+            db.session.rollback()
 
 
     def test_list_users(self):
@@ -73,6 +76,13 @@ class UserViewsTestCase(TestCase):
             # if didnt follow redirects it would be status code 301/302
             self.assertEqual(resp.status_code, 200)
             self.assertIn("<h1>TestFirstName Details</h1>", html)
+
+    def test_404_error(self):
+        """test if user visits user id that does not exist"""
+        with app.test_client() as client:
+            resp = client.get(f"/users/999999999999999999")
+            self.assertEqual(resp.status_code, 404)
+
 
     # 1. Add test if user visits incorrect page id (none existent pet)
     # 2. Add test if user tries to add duplicate pet

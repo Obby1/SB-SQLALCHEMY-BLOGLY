@@ -21,7 +21,8 @@ debug = DebugToolbarExtension(app)
 connect_db(app)
 
 
-db.create_all()
+with app.app_context():
+    db.create_all()
 
 @app.route("/")
 def home_page():
@@ -73,7 +74,7 @@ def edit_user(user_id):
 
 @app.route("/users/<int:user_id>/edit", methods=["POST"])
 def show_edited_user(user_id):
-    edituser= User.query.get(user_id)
+    edituser= User.query.get_or_404(user_id)
     edituser.first_name = request.form["first-name"]
     edituser.last_name = request.form["last-name"]
     edituser.image_url = request.form["image-url"]
