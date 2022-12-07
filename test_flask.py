@@ -1,23 +1,37 @@
+# importing flask fixed tests?
+
+from flask import Flask
 from unittest import TestCase
 from app import app
-from models import db, User
+from models import db, connect_db, User
+
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly_test_db'
 app.config['SQLALCHEMY_ECHO'] = False
+
+app.config['SECRET_KEY'] = "SECRET!"
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS']= False
 app.config['TESTING'] = True
 app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly_test_db'
+
+
+
 
 # tests won't run without below code
-with app.app_context():
-    db.drop_all()
-    db.create_all()
-    # app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly_test_db'
+# with app.app_context():
+#     db.drop_all()
+#     db.create_all()
+
+
+# below code stopped deleting the main db
+app.app_context().push()
 
 # with app.app_context():
 #     db.create_all()
 
+# below or from flask import fixed the testcase overriding main database
+connect_db(app)
 
 class UserViewsTestCase(TestCase):
     """Tests views for Users."""
@@ -81,6 +95,7 @@ class UserViewsTestCase(TestCase):
         """test if user visits user id that does not exist"""
         with app.test_client() as client:
             resp = client.get(f"/users/999999999999999999")
+            
             self.assertEqual(resp.status_code, 404)
 
 
