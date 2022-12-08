@@ -13,15 +13,34 @@
         <li>Avatar: {{user.image_url}}</li>
         
     </ul>
-
-    <a href="/users/{{user.id}}/edit">Edit Details</a>
-    <br>
-    <br>
-
+    <form action="/users/{{user.id}}/edit">
+        <button>Edit User Details</button>
+    </form>
+    <!-- <a href="/users/{{user.id}}/edit">Edit User's Details</a> -->
     <form action="/users/{{user.id}}/delete" method="POST">
-        <button>Delete</button>
+    
+        <button>Delete User</button>
     </form>
 
+    {% for post in user.posts %}
+    <h3>{{post.user.first_name}}'s post titled {{post.title}}</h3>
+    <a href="/posts/{{post.id}}"> {{post.title}} </a>
+    <p>
+      {{post.content}}  
+    </p>
+    {% endfor %}
+
+
+
+    <br>
+    <br>
+    <a href="/users/{{user.id}}/posts/new">New Post</a>
+    <br><br>
+
+
+    <br>
+
+    
 
 
 
@@ -31,3 +50,5 @@
 
 
 {% endblock %}
+
+<!-- to do: fix ugly html and add bootstrap css -->

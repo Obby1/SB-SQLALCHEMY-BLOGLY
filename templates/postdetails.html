@@ -1,0 +1,37 @@
+{% extends 'base.html'  %}
+{% block title %}User Details{% endblock %}
+
+{% block content %}
+
+    <h1>{{post.user.first_name}}'s Post Details</h1>
+
+    <ul>
+        <p>POST ID: {{post.id}}</p>
+        <br><br>
+        <p>Title: {{post.title}}</p>
+        <p>Content: {{post.content}}</p>
+       
+        <!-- <li>Avatar: {{post.user.image_url}}</li> -->
+        
+    </ul>
+
+    </form>
+    <br>
+
+    
+    <a href="/posts/{{post.id}}/edit">Edit Post Details</a>
+    <br>
+
+    <form action="/posts/{{post.id}}/delete" method="POST">
+    
+        <button>Delete Post</button>
+    </form>
+
+    <br>
+    <a href="/users">Go Back to Users</a>
+    
+
+
+{% endblock %}
+
+<!-- to do: fix ugly html and add bootstrap css -->

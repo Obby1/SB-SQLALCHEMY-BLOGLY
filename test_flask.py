@@ -3,7 +3,7 @@
 from flask import Flask
 from unittest import TestCase
 from app import app
-from models import db, connect_db, User
+from models import db, connect_db, User, Post
 
 
 
@@ -17,21 +17,31 @@ app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
 
 
 
-
 # tests won't run without below code
 # with app.app_context():
-#     db.drop_all()
-#     db.create_all()
+#     app.app_context().push()
+#     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly_test_db'
+#     # db.drop_all()
+#     # db.create_all()
 
 
 # below code stopped deleting the main db
-app.app_context().push()
 
+# below code broke test when placed here
+# with app.app_context():
+#     app.app_context().push()
+#     db.create_all()
+
+# working here: 
 # with app.app_context():
 #     db.create_all()
 
 # below or from flask import fixed the testcase overriding main database
 connect_db(app)
+with app.app_context():
+    db.create_all()
+
+app.app_context().push()
 
 class UserViewsTestCase(TestCase):
     """Tests views for Users."""
@@ -53,6 +63,8 @@ class UserViewsTestCase(TestCase):
         """Clean up any fouled transaction."""
         with app.app_context():
             db.session.rollback()
+            # BELOW BREAKS TEST            
+            # db.drop_all()
 
 
     def test_list_users(self):
@@ -101,5 +113,7 @@ class UserViewsTestCase(TestCase):
 
     # 1. Add test if user visits incorrect page id (none existent pet)
     # 2. Add test if user tries to add duplicate pet
+
+    #3. Fix all broken tests and add more tests for new functionality 
 
     
