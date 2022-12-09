@@ -79,7 +79,7 @@ class UserViewsTestCase(TestCase):
             self.post.id = post.id
 
     def tearDown(self):
-        """Clean up any fouled transaction."""
+        """Clean up any fouled transaction and delete post and user databases."""
         with app.app_context():
             db.session.rollback()
             Post.query.delete()
@@ -117,7 +117,7 @@ class UserViewsTestCase(TestCase):
         with app.test_client() as client:
             # note first-name was used instead of first_name as below data is posted to the form
             # form fields are looking for name="first-name", "last-name", "image-url" NOT first_name, last_name, image_url
-            d = {"first-name": "TestFirstName2", "last-name": "TestLastName2", "image-url": "www.google.com"}
+            d = {"first_name": "TestFirstName2", "last_name": "TestLastName2", "image_url": "www.google.com"}
             resp = client.post("/users/new", data=d, follow_redirects=True)
             html = resp.get_data(as_text=True)
             user = User.query.filter_by(last_name = 'TestLastName2').first()
@@ -128,12 +128,12 @@ class UserViewsTestCase(TestCase):
             self.assertEqual(user.image_url,'www.google.com')
 
 
-    def test_404_error(self):
-        """test if user visits user id that does not exist"""
-        with app.test_client() as client:
-            resp = client.get(f"/users/999999999999999999")
+    # def test_404_error(self):
+    #     """test if user visits user id that does not exist"""
+    #     with app.test_client() as client:
+    #         resp = client.get(f"/users/999999999999999999")
             
-            self.assertEqual(resp.status_code, 404)
+    #         self.assertEqual(resp.status_code, 404)
 
     def test_blog_page(self):
         """test if posting a blog works"""
@@ -144,6 +144,7 @@ class UserViewsTestCase(TestCase):
 
 
     def test_new_post(self):
+        """test adding new post"""
         with app.test_client() as client:
             resp = client.post(f'/users/{self.user_id}/posts/new', data={'title': 'Test title', 'content': 'Test stuff', 'user_id': self.user_id}, follow_redirects=True)
             post = Post.query.filter_by(title = 'Test_title').first()
@@ -154,6 +155,7 @@ class UserViewsTestCase(TestCase):
 
 
     def test_delete_post(self):
+        """test deleted post"""
         with app.test_client() as client:
             # tried listing post up here but didn't work. Had to move it below.
             # post = Post.query.get(self.post.id)
@@ -164,6 +166,14 @@ class UserViewsTestCase(TestCase):
             # post = Post.query.get(self.post.id)
             # self.assertEqual(resp.status_code, 200)      
             # self.assertNotIn(f"{self.post.id}", html)
+
+    def test_delete_user(self):
+        """test deleting user"""
+        with app.test_client() as client:
+            resp = client.post(f'/users/{self.user.id}/delete', follow_redirects=True)
+            user = User.query.get(self.user.id)
+            self.assertFalse(user)
+
     
 
     # def test_delete_user(self):

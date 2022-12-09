@@ -15,7 +15,8 @@ app.config['SQLALCHEMY_ECHO'] = True
 app.config['SECRET_KEY'] = "SECRET!"
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS']= False
 
-debug = DebugToolbarExtension(app)
+# debug = DebugToolbarExtension(app)
+toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
 
@@ -29,13 +30,21 @@ with app.app_context():
 def home_page():
     """shows list of all pets in db"""
     users= User.query.all()
+    posts = Post.query.order_by(Post.created_at.desc()).limit(5).all()
     # return "Welcome"
-    return render_template("home.html", users=users)
+    return render_template("home.html", users=users, posts = posts)
+
+@app.errorhandler(404)
+def page_not_found(e):
+    """Show 404 NOT FOUND page."""
+    return render_template('404.html'), 404
+
 
 @app.route("/users")
 def show_users():
     """shows list of all pets in db"""
-    users= User.query.all()
+    # users= User.query.all()
+    users = User.query.order_by(User.last_name, User.first_name).all()
     return render_template("users.html", users=users)
 
 @app.route("/users/new")
@@ -47,16 +56,21 @@ def add_new_user():
 
 @app.route("/users/new", methods=["POST"])
 def create_new_user():
-    first_name = request.form["first-name"]
-    last_name = request.form["last-name"]
-    image_url = request.form["image-url"]
-    new_user = User(first_name=first_name, last_name=last_name, image_url=image_url)
+    # first_name = request.form["first-name"]
+    # last_name = request.form["last-name"]
+    # image_url = request.form["image-url"] or None
+    # new_user = User(first_name=first_name, last_name=last_name, image_url=image_url)
+    new_user = User(
+        first_name=request.form['first_name'],
+        last_name=request.form['last_name'],
+        image_url=request.form['image_url'] or None)
     db.session.add(new_user)
     db.session.commit()
+    flash(f"User {new_user.full_name} added.")
     return redirect(f"/users/{new_user.id}")
 
 @app.route('/users/<int:user_id>')
-def show_new_user(user_id):
+def show_user_details(user_id):
     """show details about a single user"""
     # instead of writing method to check if pet is None, use get or 404
     user = User.query.get_or_404(user_id)
@@ -86,12 +100,18 @@ def show_edited_user(user_id):
 
 @app.route("/users/<int:user_id>/delete", methods=["POST"])
 def delete_user(user_id):
-    User.query.filter_by(id=user_id).delete()
+    # User.query.filter_by(id=user_id).delete()
+    # db.session.commit()
+
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
     db.session.commit()
+    flash(f"User {user.full_name} deleted.")
+
     return redirect(f"/users")
 
 
-############# POST ROUTES #############
+############# BLOG POST ROUTES #############
 
 @app.route("/users/<int:user_id>/posts/new")
 def new_post(user_id):
@@ -102,10 +122,13 @@ def new_post(user_id):
 @app.route("/users/<int:user_id>/posts/new", methods=["POST"])
 def post_post(user_id):
     """post the new post"""
-    title = request.form["title"]
-    content = request.form["content"]
+    # title = request.form["title"]
+    # content = request.form["content"]
     user = User.query.get_or_404(user_id)
-    new_post = Post(title=title, content = content, user = user)
+    # new_post = Post(title=title, content = content, user = user)
+    new_post = Post(title=request.form['title'],
+                    content=request.form['content'],
+                    user=user)    
     db.session.add(new_post)
     db.session.commit()
     # return redirect(f"/posts/{new_post.id}")
@@ -142,10 +165,31 @@ def show_editted_post(post_id):
 
 @app.route("/posts/<int:post_id>/delete", methods=["POST"])
 def delete_post(post_id):
-    Post.query.filter_by(id=post_id).delete()
+    # Post.query.filter_by(id=post_id).delete()
+    post = Post.query.get_or_404(post_id)
+    db.session.delete(post)
     db.session.commit()
+    flash(f"Post '{post.title} deleted.")
     return redirect(f"/posts")
+    # return redirect(f"/users/{post.user_id}")
 
+
+# Notes:
+    # sample file has posts/edit.html under render, is this better practice?
+
+
+
+
+
+# TO DO:
+    #1. write tests for error handling for error or 404 
+    #2. flash message if error?
+    #3. tests overwriting data
+    #4. add query or get to all other get requests
+    #5. move html files to separate folders to clean up this code 
+
+
+# old code:
 
 # @app.route("/users/<int:user_id>/edit", methods=["POST"])
 # def show_edited_user(user_id):
@@ -156,11 +200,3 @@ def delete_post(post_id):
 #     db.session.add(edituser)
 #     db.session.commit()
 #     return redirect(f"/users/{user_id}")
-
-
-
-# TO DO:
-    #1. write tests for error handling for error or 404 
-    #2. flash message if error?
-    #3. tests overwriting data
-    #4. add query or get to all other get requests
