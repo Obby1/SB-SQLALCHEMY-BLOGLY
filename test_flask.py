@@ -54,22 +54,36 @@ class UserViewsTestCase(TestCase):
     def setUp(self):
         """Add sample User."""
         with app.app_context():
+            # working
+            Post.query.delete()
             User.query.delete()
             user = User(first_name="TestUser_firstname", last_name="TestUser_lastname")
             # ideal to add 2 pets to check list pets shows up, like testpet2 
+
             db.session.add(user)
+            # new
+            db.session.commit()           
+            # working
+            db.session.flush()
+            # working
+            post = Post(title='Test_title', content='Test_content', user_id=user.id)
+            # working
+            db.session.add(post)
             db.session.commit()
             # in this instance of TestCase setting self.pet_id to pet_id so inside
             # of every test. Instead of making a new pet and using that in every
             # single test below, we can just reference pet.id
             self.user_id = user.id
             self.user = user
+            self.post = post
+            self.post.id = post.id
 
     def tearDown(self):
         """Clean up any fouled transaction."""
         with app.app_context():
             db.session.rollback()
-
+            Post.query.delete()
+            User.query.delete()
             # BELOW BREAKS TEST            
             # db.drop_all()
 
@@ -103,12 +117,16 @@ class UserViewsTestCase(TestCase):
         with app.test_client() as client:
             # note first-name was used instead of first_name as below data is posted to the form
             # form fields are looking for name="first-name", "last-name", "image-url" NOT first_name, last_name, image_url
-            d = {"first-name": "TestFirstName", "last-name": "TestLastName", "image-url": "www.google.com"}
+            d = {"first-name": "TestFirstName2", "last-name": "TestLastName2", "image-url": "www.google.com"}
             resp = client.post("/users/new", data=d, follow_redirects=True)
             html = resp.get_data(as_text=True)
+            user = User.query.filter_by(last_name = 'TestLastName2').first()
             # if didnt follow redirects it would be status code 301/302
             self.assertEqual(resp.status_code, 200)
-            self.assertIn("<h1>TestFirstName Details</h1>", html)
+            self.assertIn("<h1>TestFirstName2 Details</h1>", html)
+            self.assertEqual(user.first_name, 'TestFirstName2')
+            self.assertEqual(user.image_url,'www.google.com')
+
 
     def test_404_error(self):
         """test if user visits user id that does not exist"""
@@ -124,14 +142,89 @@ class UserViewsTestCase(TestCase):
             resp = client.get("/posts")
             self.assertEqual(resp.status_code, 200)
 
-    def test_add_new_post(self):
+
+    def test_new_post(self):
         with app.test_client() as client:
-            """test adding a new post"""
-            user = User.query.get_or_404(self.user_id)
-            post = {"title": "test title", "content": "test content",
-             "user": user }
-            #problem below
-            # resp = client.post(f"/users/{self.user_id}/posts/new", data=post, follow_redirects=True)
+            resp = client.post(f'/users/{self.user_id}/posts/new', data={'title': 'Test title', 'content': 'Test stuff', 'user_id': self.user_id}, follow_redirects=True)
+            post = Post.query.filter_by(title = 'Test_title').first()
+            html = client.get(f'/posts/{post.id}').get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('Test_title', html)
+            self.assertIn('Test_content', html)
+
+
+    def test_delete_post(self):
+        with app.test_client() as client:
+            # tried listing post up here but didn't work. Had to move it below.
+            # post = Post.query.get(self.post.id)
+            resp = client.post(f'/posts/{self.post.id}/delete', follow_redirects=True)
+            post = Post.query.get(self.post.id)
+            self.assertFalse(post)
+            # html = resp.get_data(as_text=True)
+            # post = Post.query.get(self.post.id)
+            # self.assertEqual(resp.status_code, 200)      
+            # self.assertNotIn(f"{self.post.id}", html)
+    
+
+    # def test_delete_user(self):
+    #     with app.test_client() as client:
+
+    #         resp = client.post(f'/posts/{self.post.id}/delete', follow_redirects=True)
+    #         post = Post.query.get(self.post.id)
+    #         self.assertFalse(post)
+
+
+
+# not working:
+#     def test_delete_post(self):
+#         with app.test_client() as client:
+#             # post = Post.query.filter_by(title = "Test_title").first()
+#             resp = client.post(f'/posts/{self.post.id}/delete', follow_redirects=True)
+#             html = resp.get_data(as_text=True)
+#             self.assertEqual(resp.status_code, 200)      
+#             self.assertNotIn(f"{self.post.id}", html)
+
+
+
+
+# # cannot delete user with active post - test delete post first then fix code
+
+#     def test_delete_user(self):
+#         with app.test_client() as client:
+#             user = User.query.filter_by(first_name = 'TestUser_firstname').first()
+#             resp = client.post(f'/users/{user.id}/delete')
+#             # user = User.query.get(self.user_id)
+#             # self.assertFalse(user)	
+
+
+
+# @app.route("/users/<int:user_id>/delete", methods=["POST"])
+# def delete_user(user_id):
+#     User.query.filter_by(id=user_id).delete()
+#     db.session.commit()
+#     return redirect(f"/users")
+
+# @app.route("/posts/<int:post_id>/delete", methods=["POST"])
+# def delete_post(post_id):
+#     Post.query.filter_by(id=post_id).delete()
+#     db.session.commit()
+#     return redirect(f"/posts")
+
+
+    # 1. Test post form  
+    # 2. Add test if user tries to add duplicate user
+    # 3.
+
+
+    # not working below
+    # def test_add_new_post(self):
+    #     with app.test_client() as client:
+    #         """test adding a new post"""
+    #         user = User.query.get_or_404(self.user_id)
+    #         post = {"title": "test title", "content": "test content",
+    #          "user": user }
+    #         #problem below
+    #         resp = client.post(f"/users/{self.user_id}/posts/new", data=post, follow_redirects=True)
             
             
     # resp = client.post(f'/users/{self.user_id}/posts/new', data={'title': 'Test title', 'content': 'Test stuff', 'user_id': self.user_id})
@@ -221,9 +314,6 @@ class UserViewsTestCase(TestCase):
 
             
 
-    # 1. Add test if user visits incorrect page id (none existent pet)
-    # 2. Add test if user tries to add duplicate pet
 
-    #3. Fix all broken tests and add more tests for new functionality 
 
     
