@@ -9,6 +9,8 @@
     <li>
         <a href="tags/{{tag.id}}">{{tag.name}}</a>
     </li>
+    {% else %}
+    <h6>No Tags Exist</h6>
     {% endfor %}
 </ul>
 
@@ -20,5 +22,7 @@
 
 <h2>All  Users</h2>
 <a href="/users">Access All Users</a>
+<br>
+<a href="/">Home Page</a>
 
 {% endblock %}

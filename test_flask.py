@@ -3,7 +3,7 @@
 from flask import Flask
 from unittest import TestCase
 from app import app
-from models import db, connect_db, User, Post
+from models import db, connect_db, User, Post, Tag
 
 
 
@@ -57,9 +57,9 @@ class UserViewsTestCase(TestCase):
             # working
             Post.query.delete()
             User.query.delete()
+            Tag.query.delete()
             user = User(first_name="TestUser_firstname", last_name="TestUser_lastname")
             # ideal to add 2 pets to check list pets shows up, like testpet2 
-
             db.session.add(user)
             # new
             db.session.commit()           
@@ -73,10 +73,15 @@ class UserViewsTestCase(TestCase):
             # in this instance of TestCase setting self.pet_id to pet_id so inside
             # of every test. Instead of making a new pet and using that in every
             # single test below, we can just reference pet.id
+            tag = Tag(name='Test_tag')
+            db.session.add(tag)
+            db.session.commit()
             self.user_id = user.id
             self.user = user
             self.post = post
             self.post.id = post.id
+            self.tag = tag
+            self.tag.id = tag.id
 
     def tearDown(self):
         """Clean up any fouled transaction and delete post and user databases."""
@@ -146,12 +151,13 @@ class UserViewsTestCase(TestCase):
     def test_new_post(self):
         """test adding new post"""
         with app.test_client() as client:
-            resp = client.post(f'/users/{self.user_id}/posts/new', data={'title': 'Test title', 'content': 'Test stuff', 'user_id': self.user_id}, follow_redirects=True)
-            post = Post.query.filter_by(title = 'Test_title').first()
+            resp = client.post(f'/users/{self.user_id}/posts/new', data={'title': 'Test_title2', 'content': 'Test stuff', 'user_id': self.user_id}, follow_redirects=True)
+            
+            post = Post.query.filter_by(title = 'Test_title2').first()
             html = client.get(f'/posts/{post.id}').get_data(as_text=True)
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('Test_title', html)
-            self.assertIn('Test_content', html)
+            self.assertIn('Test_title2', html)
+            self.assertIn('Test stuff', html)
 
 
     def test_delete_post(self):
@@ -173,6 +179,22 @@ class UserViewsTestCase(TestCase):
             resp = client.post(f'/users/{self.user.id}/delete', follow_redirects=True)
             user = User.query.get(self.user.id)
             self.assertFalse(user)
+
+    def test_add_tag(self):
+        """test adding tag"""
+        with app.test_client() as client:
+            resp = client.post(f'/tags/new', data={'name': 'Another Test Tag'}, follow_redirects=True)
+            tag = Tag.query.filter_by(name = 'Another Test Tag').first()
+            html = client.get(f'/tags').get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('Another Test Tag', html)
+
+    def test_delete_tag(self):
+        """test deleting a tag"""
+        with app.test_client() as client:
+            resp = client.post(f'/tags/{self.tag.id}/delete', follow_redirects= True)
+            tag = Tag.query.get(self.tag.id)
+            self.assertFalse(tag)       
 
     
 

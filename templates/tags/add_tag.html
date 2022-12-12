@@ -7,6 +7,24 @@
     <input type="text" name="name" placeholder="tag name">
     <button>Submit Tag</button>
 
+    
+    <div class="form-check form-group row">
+        {% for post in posts %}
+        <div>
+          <input class="form-input"
+                 type="checkbox"
+                 value="{{ post.id }}"
+                 id="post_{{ post.id }}"
+                 name="posts">
+          <label class="form-check-label" for="post_{{ post.id }}">
+            {{ post.title }}
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+    
+
+
 </form>
 <br>
 <a href="/tags">Go Back</a>

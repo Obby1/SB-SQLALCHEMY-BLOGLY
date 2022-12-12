@@ -3,6 +3,8 @@
 from flask import Flask, render_template, request, redirect, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_sqlalchemy import SQLAlchemy
+from psycopg2.errorcodes import UNIQUE_VIOLATION
+from psycopg2 import errors
 from models import db, connect_db, User, Post, Tag, PostTag
 
 app = Flask(__name__)
@@ -63,14 +65,16 @@ def create_new_user():
     # last_name = request.form["last-name"]
     # image_url = request.form["image-url"] or None
     # new_user = User(first_name=first_name, last_name=last_name, image_url=image_url)
+        
     new_user = User(
-        first_name=request.form['first_name'],
-        last_name=request.form['last_name'],
-        image_url=request.form['image_url'] or None)
+    first_name=request.form['first_name'],
+    last_name=request.form['last_name'],
+    image_url=request.form['image_url'] or None)
     db.session.add(new_user)
     db.session.commit()
     flash(f"User {new_user.full_name} added.")
     return redirect(f"/users/{new_user.id}")
+  
 
 @app.route('/users/<int:user_id>')
 def show_user_details(user_id):
@@ -130,9 +134,10 @@ def post_post(user_id):
     # title = request.form["title"]
     # content = request.form["content"]
     user = User.query.get_or_404(user_id)
-    # get list of tags
+    # get list of tags that are checked
     tag_ids = [int(num) for num in request.form.getlist("tags")]
-    # get tags that are in tag_ids 
+    # set tags = to tags that were checked off in above tag_ids
+
     tags = Tag.query.filter(Tag.id.in_(tag_ids)).all()
     # new_post = Post(title=title, content = content, user = user)
     new_post = Post(title=request.form['title'],
@@ -173,7 +178,9 @@ def show_editted_post(post_id):
     editpost = Post.query.get_or_404(post_id)
     editpost.title = request.form["title"]
     editpost.content = request.form["content"]
+    # get list of all tags that were checked off
     tag_ids = [int(num) for num in request.form.getlist("tags")]
+    #set edittpost's tags = to tag ids that were checked off
     editpost.tags = Tag.query.filter(Tag.id.in_(tag_ids)).all()
     # editpost.user? I'm not updating the user, shouldnt have to call it
     db.session.add(editpost)
@@ -205,24 +212,57 @@ def show_tag_details(tag_id):
     tag = Tag.query.get_or_404(tag_id)
     return render_template(f"tags/tag_details.html", tag=tag)
 
+
+# working below
 @app.route("/tags/new")
 def add_new_tag():
-    return render_template("tags/add_tag.html")
+    posts = Post.query.all()
+    return render_template("tags/add_tag.html", posts= posts)
 
+# # finish this error catching route when you have time
+# @app.route("/tags/new", methods = ["POST"])
+# def post_new_tag():
+#     """post the new tag and return to list of tags page"""
+#     try: 
+#         name = request.form["name"]
+#         post_ids = [int(num) for num in request.form.getlist("posts")]
+#         posts = Post.query.filter(Post.id.in_(post_ids)).all()
+#         new_tag= Tag(name = name, posts=posts)
+#         db.session.add(new_tag)
+#         db.session.commit()
+#         flash(f"Tag '{new_tag.name}' added.")
+#         return redirect(f"/tags/{new_tag.id}")
+#     except errors.lookup(UNIQUE_VIOLATION) as e:
+#         # name = request.form["name"]
+#         # post_ids = [int(num) for num in request.form.getlist("posts")]
+#         # posts = Post.query.filter(Post.id.in_(post_ids)).all()
+#         # new_tag= Tag(name = name, posts=posts)
+#         posts = Post.query.all()
+#         flash(f"Tag '{new_tag.name}' already exists.")
+#         return render_template("tags/add_tag.html", posts= posts)
+
+
+# working below
 @app.route("/tags/new", methods = ["POST"])
 def post_new_tag():
     """post the new tag and return to list of tags page"""
     name = request.form["name"]
-    new_tag= Tag(name = name)
+    post_ids = [int(num) for num in request.form.getlist("posts")]
+    posts = Post.query.filter(Post.id.in_(post_ids)).all()
+    new_tag= Tag(name = name, posts=posts)
     db.session.add(new_tag)
     db.session.commit()
+    flash(f"Tag '{new_tag.name}' added.")
     return redirect(f"/tags/{new_tag.id}")
 
 @app.route ("/tags/<int:tag_id>/edit")
 def edit_tag(tag_id):
     """render page to edit tag details"""
     tag = Tag.query.get_or_404(tag_id)
-    return render_template("tags/edit_tag.html", tag = tag)
+    # post_ids = [int(num) for num in request.form.getlist("posts")]
+    # posts = Post.query.filter(Post.id.in_(post_ids)).all()
+    posts = Post.query.all()
+    return render_template("tags/edit_tag.html", tag = tag, posts = posts)
 
 
 @app.route ("/tags/<int:tag_id>/edit", methods = ["POST"])
@@ -230,6 +270,12 @@ def post_edit_tag(tag_id):
     """post editted tag"""
     edittag = Tag.query.get_or_404(tag_id)
     edittag.name = request.form["name"]
+    # first get list of ALL post ids that are checked
+    # getlist works with checkboxes, name set to posts in HTML, returns a list
+    post_ids = [int(num) for num in request.form.getlist("posts")]
+    # add posts to edittag that are checked
+    edittag.posts = Post.query.filter(Post.id.in_(post_ids)).all()
+
     db.session.add(edittag)
     db.session.commit()
     return redirect(f"/tags/{edittag.id}")
@@ -241,23 +287,8 @@ def delete_tag(tag_id):
     tag = Tag.query.get_or_404(tag_id)
     db.session.delete(tag)
     db.session.commit()
-    flash(f"Tag '{tag.name} deleted.")
+    flash(f"Tag '{tag.name}' deleted.")
     return redirect(f"/tags")
-
-
-
-# @app.route("/posts/<int:post_id>/delete", methods=["POST"])
-# def delete_post(post_id):
-#     # Post.query.filter_by(id=post_id).delete()
-#     post = Post.query.get_or_404(post_id)
-#     db.session.delete(post)
-#     db.session.commit()
-#     flash(f"Post '{post.title} deleted.")
-#     return redirect(f"/posts")
-#     # return redirect(f"/users/{post.user_id}")
-
-# 
-
 
 
 
@@ -267,15 +298,17 @@ def delete_tag(tag_id):
 
 # TO DO:
     #1. write tests for error handling for error or 404 
-    #2. flash message if error?
+    #2. flash message if error? like duplicate tags
     #3. tests overwriting data
-    #4. add query or get to all other get requests
+
     #5. move html files to separate folders to clean up this code 
-    #6. Complete all further study suggestions like showing date time on posts
-    # 7. empty user showing on DB - clean up DB somehow with python internally?
+
+
     # error handling on duplicate tags needs updates
     # error handling for additional funcionality
-    # bonus exercises
+    # add more tests like adding checkbox tags to existing post / vice versa
+
+    # Standardize tags - always looks like the button?
 
 
 # old code:

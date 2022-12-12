@@ -22,9 +22,12 @@
 
     <h1>{{ tag.name }} Posts</h1>
 
+    <h6>List of Recent Posts:</h6>
     <ul>
     {% for post in tag.posts %}
-    <li><a href="/posts/{{ post.id }}">{{ post.title }}</a></li>
+        <li><a href="/posts/{{ post.id }}">{{ post.title }}</a></li>
+    {% else %}
+    <h6>no posts found with this tag</h6>
     {% endfor %}
     </ul>
 

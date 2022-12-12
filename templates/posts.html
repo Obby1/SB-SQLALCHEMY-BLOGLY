@@ -9,22 +9,16 @@
     <li>
         <a href="/posts/{{post.id}}">by {{post.user.first_name}} {{post.user.last_name}}, {{post.title}}</a>
     </li>
+    {% else %}
+    <h6>
+        No Recent Posts
+    </h6>
     {% endfor %}
 </ul>
 
 <a href="/users">Go Back to Users</a>
-<!-- already on the "/" route, no need to declare "/" in action -->
-<!-- <h2>Add New User</h2>
-<a href="/users/new">Add New User</a> -->
-<!-- <form action="/" method="POST">
-    <input type="text" name="first-name" placeholder="first name">
-    <input type="text" name="last-name" placeholder="last name">
-    <input type="text" name="image-url" placeholder="img url here">
-    <button>Submit User</button>
-
-</form>
-     -->
-    
+<br>
+<a href="/">Home Page</a>
 
 
 {% endblock %}

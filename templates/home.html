@@ -9,6 +9,9 @@
 <h2>Add New User</h2>
 <a href="/users/new">Add New User</a>
 
+<h2>View All Tags</h2>
+<a href="/tags">View All Tags</a>
+
 <h2>Blogly Recent Posts</h2>
 
 {% for post in posts %}
@@ -21,15 +24,19 @@
 <p>
   <small>By {{ post.user.full_name }} on {{ post.friendly_date }}</small>
 </p>
+
+{% if post.tags %}
+<p>
+  <b>Tags:</b>
+  {% for tag in post.tags %}
+  <a href="/tags/{{ tag.id }}"><i class="badge badge-primary">{{ tag.name }}</i></a>
+  {% endfor %}
+</p>
+{% endif %}
+
 {% endfor %}
 
-<h2>Blogly Post Tags</h2>
 
-{% for tag in tags %}
-<h4 class="mt-4">
-  <a href="/tags/{{ tag.id }}">{{ tag.name }}</a>
-</h4>
-{% endfor %}
 
 {% endblock %}}
 
