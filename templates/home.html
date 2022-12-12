@@ -3,17 +3,32 @@
 
 {% block content %}
 
+<h2>All  Users</h2>
+<a href="/users">Access All Users</a>
 
-<h1>Blogly Recent Posts</h1>
+<h2>Add New User</h2>
+<a href="/users/new">Add New User</a>
+
+<h2>Blogly Recent Posts</h2>
 
 {% for post in posts %}
-<h2 class="mt-4">
+<h4 class="mt-4">
   <a href="/posts/{{ post.id }}">{{ post.title }}</a>
-</h2>
+</h4>
+
+
 <p>{{ post.content }}</p>
 <p>
   <small>By {{ post.user.full_name }} on {{ post.friendly_date }}</small>
 </p>
+{% endfor %}
+
+<h2>Blogly Post Tags</h2>
+
+{% for tag in tags %}
+<h4 class="mt-4">
+  <a href="/tags/{{ tag.id }}">{{ tag.name }}</a>
+</h4>
 {% endfor %}
 
 {% endblock %}}

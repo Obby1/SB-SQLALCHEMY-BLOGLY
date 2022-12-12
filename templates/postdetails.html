@@ -10,8 +10,15 @@
         <br><br>
         <p>Title: {{post.title}}</p>
         <p>Content: {{post.content}}</p>
-       
-        <!-- <li>Avatar: {{post.user.image_url}}</li> -->
+
+        {% if post.tags %}
+        <p>
+          <b>Tags:</b>
+          {% for tag in post.tags %}
+          <a href="/tags/{{ tag.id }}"><i class="badge badge-primary">{{ tag.name }}</i></a>
+          {% endfor %}
+        </p>
+        {% endif %}
         
     </ul>
 
@@ -29,6 +36,8 @@
 
     <br>
     <a href="/users">Go Back to Users</a>
+    <br>
+    <a href="/tags">Go Back to Tags</a>
     
 
 

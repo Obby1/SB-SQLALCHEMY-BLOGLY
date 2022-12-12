@@ -11,8 +11,27 @@
         Current Content: <br>
         <input type="text" name="content" value="{{post.content}}"> <br>
 
+        <div class="form-check">
+            {% for tag in tags %}
+            <div>
+              <input class="form-check-input"
+                     type="checkbox"
+                     value="{{ tag.id }}"
+                     id="tag_{{ tag.id }}"
+                     {% if tag in post.tags %}checked{% endif %}
+                     name="tags">
+              <label class="form-check-label" for="tag_{{ tag.id }}">
+                {{ tag.name }}
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+
+
         <button>Edit Post</button>
     
+
+
     </form>
 
     <br>

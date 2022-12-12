@@ -1,0 +1,20 @@
+{% extends 'base.html'  %}
+{% block title %}Add New Tag{% endblock %}
+
+{% block content %}
+<h1>Add New Tag</h1>
+<form action="/tags/new" method="POST">
+    <input type="text" name="name" placeholder="tag name">
+    <button>Submit Tag</button>
+
+</form>
+<br>
+<a href="/tags">Go Back</a>
+
+
+    
+    
+<!-- why is post request going to tags/new in browser? shouldnt 
+it go to tags -->
+
+{% endblock %}

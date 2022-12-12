@@ -17,14 +17,14 @@
 <!-- already on the "/" route, no need to declare "/" in action -->
 <h2>Add New User</h2>
 <a href="/users/new">Add New User</a>
-<!-- <form action="/" method="POST">
-    <input type="text" name="first-name" placeholder="first name">
-    <input type="text" name="last-name" placeholder="last name">
-    <input type="text" name="image-url" placeholder="img url here">
-    <button>Submit User</button>
 
-</form>
-     -->
+<h2>Blogly Post Tags</h2>
+
+{% for tag in tags %}
+<h4 class="mt-4">
+  <a href="/tags/{{ tag.id }}">{{ tag.name }}</a>
+</h4>
+{% endfor %}
     
 
 

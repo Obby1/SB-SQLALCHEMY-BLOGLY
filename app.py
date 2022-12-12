@@ -3,7 +3,7 @@
 from flask import Flask, render_template, request, redirect, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_sqlalchemy import SQLAlchemy
-from models import db, connect_db, User, Post
+from models import db, connect_db, User, Post, Tag, PostTag
 
 app = Flask(__name__)
 
@@ -26,18 +26,20 @@ with app.app_context():
     # app.app_context().push()
 
 
+
 @app.route("/")
 def home_page():
     """shows list of all pets in db"""
     users= User.query.all()
     posts = Post.query.order_by(Post.created_at.desc()).limit(5).all()
+    tags = Tag.query.all()
     # return "Welcome"
-    return render_template("home.html", users=users, posts = posts)
+    return render_template("home.html", users=users, posts = posts, tags=tags)
 
-@app.errorhandler(404)
-def page_not_found(e):
-    """Show 404 NOT FOUND page."""
-    return render_template('404.html'), 404
+# @app.errorhandler(404)
+# def page_not_found(e):
+#     """Show 404 NOT FOUND page."""
+#     return render_template('404.html'), 404
 
 
 @app.route("/users")
@@ -45,7 +47,8 @@ def show_users():
     """shows list of all pets in db"""
     # users= User.query.all()
     users = User.query.order_by(User.last_name, User.first_name).all()
-    return render_template("users.html", users=users)
+    tags = Tag.query.all()
+    return render_template("users.html", users=users, tags=tags)
 
 @app.route("/users/new")
 def add_new_user():
@@ -117,7 +120,9 @@ def delete_user(user_id):
 def new_post(user_id):
     """show new posts page"""
     user = User.query.get_or_404(user_id)
-    return render_template("newpost.html", user=user)
+    tags = Tag.query.all()
+    # tag_names = Tag.get_tags()    
+    return render_template("newpost.html", user=user, tags = tags)
 
 @app.route("/users/<int:user_id>/posts/new", methods=["POST"])
 def post_post(user_id):
@@ -125,14 +130,21 @@ def post_post(user_id):
     # title = request.form["title"]
     # content = request.form["content"]
     user = User.query.get_or_404(user_id)
+    # get list of tags
+    tag_ids = [int(num) for num in request.form.getlist("tags")]
+    # get tags that are in tag_ids 
+    tags = Tag.query.filter(Tag.id.in_(tag_ids)).all()
     # new_post = Post(title=title, content = content, user = user)
     new_post = Post(title=request.form['title'],
                     content=request.form['content'],
-                    user=user)    
+                    user=user, tags = tags)    
     db.session.add(new_post)
     db.session.commit()
+    flash(f"Post '{new_post.title}' added.")
     # return redirect(f"/posts/{new_post.id}")
     return redirect(f"/posts/{new_post.id}")
+
+
 
 @app.route("/posts")
 def show_posts():
@@ -144,13 +156,16 @@ def show_posts():
 def show_new_post(post_id):
     """show details about new post"""
     post = Post.query.get_or_404(post_id)
+
     return render_template("postdetails.html", post = post)
 
 @app.route('/posts/<int:post_id>/edit')
 def edit_post(post_id):
     """edit post details"""
     post = Post.query.get_or_404(post_id)
-    return render_template("editpost.html", post = post)
+    # todo - add tags in post edit html
+    tags = Tag.query.all()
+    return render_template("editpost.html", post = post, tags=tags)
 
 @app.route('/posts/<int:post_id>/edit', methods=["POST"] )
 def show_editted_post(post_id):
@@ -158,6 +173,8 @@ def show_editted_post(post_id):
     editpost = Post.query.get_or_404(post_id)
     editpost.title = request.form["title"]
     editpost.content = request.form["content"]
+    tag_ids = [int(num) for num in request.form.getlist("tags")]
+    editpost.tags = Tag.query.filter(Tag.id.in_(tag_ids)).all()
     # editpost.user? I'm not updating the user, shouldnt have to call it
     db.session.add(editpost)
     db.session.commit()
@@ -173,12 +190,79 @@ def delete_post(post_id):
     return redirect(f"/posts")
     # return redirect(f"/users/{post.user_id}")
 
+############# TAG POST ROUTES #############
+
+@app.route("/tags")
+def show_tags():
+    """show list of tags"""
+    tags = Tag.query.all()
+    return render_template("tags/show_tags.html", tags = tags)
+
+
+@app.route("/tags/<int:tag_id>")
+def show_tag_details(tag_id):
+    """show tag_id details"""
+    tag = Tag.query.get_or_404(tag_id)
+    return render_template(f"tags/tag_details.html", tag=tag)
+
+@app.route("/tags/new")
+def add_new_tag():
+    return render_template("tags/add_tag.html")
+
+@app.route("/tags/new", methods = ["POST"])
+def post_new_tag():
+    """post the new tag and return to list of tags page"""
+    name = request.form["name"]
+    new_tag= Tag(name = name)
+    db.session.add(new_tag)
+    db.session.commit()
+    return redirect(f"/tags/{new_tag.id}")
+
+@app.route ("/tags/<int:tag_id>/edit")
+def edit_tag(tag_id):
+    """render page to edit tag details"""
+    tag = Tag.query.get_or_404(tag_id)
+    return render_template("tags/edit_tag.html", tag = tag)
+
+
+@app.route ("/tags/<int:tag_id>/edit", methods = ["POST"])
+def post_edit_tag(tag_id):
+    """post editted tag"""
+    edittag = Tag.query.get_or_404(tag_id)
+    edittag.name = request.form["name"]
+    db.session.add(edittag)
+    db.session.commit()
+    return redirect(f"/tags/{edittag.id}")
+
+
+@app.route ("/tags/<int:tag_id>/delete", methods = ["POST"])
+def delete_tag(tag_id):
+    """delete tag id"""
+    tag = Tag.query.get_or_404(tag_id)
+    db.session.delete(tag)
+    db.session.commit()
+    flash(f"Tag '{tag.name} deleted.")
+    return redirect(f"/tags")
+
+
+
+# @app.route("/posts/<int:post_id>/delete", methods=["POST"])
+# def delete_post(post_id):
+#     # Post.query.filter_by(id=post_id).delete()
+#     post = Post.query.get_or_404(post_id)
+#     db.session.delete(post)
+#     db.session.commit()
+#     flash(f"Post '{post.title} deleted.")
+#     return redirect(f"/posts")
+#     # return redirect(f"/users/{post.user_id}")
+
+# 
+
+
+
 
 # Notes:
     # sample file has posts/edit.html under render, is this better practice?
-
-
-
 
 
 # TO DO:
@@ -187,6 +271,9 @@ def delete_post(post_id):
     #3. tests overwriting data
     #4. add query or get to all other get requests
     #5. move html files to separate folders to clean up this code 
+    #6. Complete all further study suggestions like showing date time on posts
+    # 7. empty user showing on DB - clean up DB somehow with python internally?
+    # error handling on duplicate tags needs updates
 
 
 # old code:
