@@ -274,6 +274,8 @@ def delete_tag(tag_id):
     #6. Complete all further study suggestions like showing date time on posts
     # 7. empty user showing on DB - clean up DB somehow with python internally?
     # error handling on duplicate tags needs updates
+    # error handling for additional funcionality
+    # bonus exercises
 
 
 # old code:
